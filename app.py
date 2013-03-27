@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template
 from flask.ext.sqlalchemy import SQLAlchemy
+from models import User
 
 #----------------------------------------
 # Initialization
@@ -8,36 +9,15 @@ from flask.ext.sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
+basedir = os.path.abspath(os.path.dirname(__file__))
 app.config.update(
     DEBUG = True,
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+    # Heroku Setting
+    #SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),
     )
 
 db = SQLAlchemy(app)
-
-
-#----------------------------------------
-# Models
-#----------------------------------------
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80))
-    email = db.Column(db.String(120), unique=True)
-
-    def __init__(self, name, email):
-        self.name = name
-        self.email = email
-
-    def __repr__(self):
-        return '<Name %r>' % self.name
-
-# Create a test user
-'''
-user = User('John Doe', 'john@example.com')
-db.session.add(user)
-db.session.commit()
-'''
 
 
 #----------------------------------------

@@ -14,8 +14,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config.update(
     DEBUG = True,
     # Heroku Setting
-    #SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),
+    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
+    # Local Development sqlite setting
+    #SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),
     CSRF_ENABLED = True,
     SECRET_KEY = 'my_secret_key',
     )

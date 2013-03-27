@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template
-
+from flask.ext.sqlalchemy import SQLAlchemy
 
 #----------------------------------------
 # Initialization
@@ -10,8 +10,10 @@ app = Flask(__name__)
 
 app.config.update(
     DEBUG = True,
+    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
     )
 
+db = SQLAlchemy(app)
 
 #----------------------------------------
 # Controllers

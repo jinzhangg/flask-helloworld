@@ -13,7 +13,7 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config.update(
     DEBUG = True,
-    # Heroku Setting
+    # Heroku Database Setting
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
     # Local Development sqlite setting
     #SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),

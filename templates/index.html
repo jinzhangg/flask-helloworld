@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %} - Home{% endblock %}
 {% block content %}
-{% if not session.logged_in %}
-    <p>You are not logged in.</p>
+{% if current_user.is_authenticated() %}
+    <p>You are logged in as <strong>{{ user.name }}</strong>.</p>
 {% else %}
-    <p>You are logged in.</p>
+    <p>You are not logged in.</p>
 {% endif %}
 {% endblock %}

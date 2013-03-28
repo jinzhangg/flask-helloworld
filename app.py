@@ -14,15 +14,16 @@ app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config.update(
-    DEBUG = True,
-    # Heroku Database Setting
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
-    # Local Postgresql Setting
-    #SQLALCHEMY_DATABASE_URI = "postgresql://postgres:postgres_pw@localhost/database_1",
-    # Local sqlite setting
-    #SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),
-    CSRF_ENABLED = True,
-    SECRET_KEY = 'your_secret_key',
+    # Database Setting For Heroku
+    # Searches for Heroku's DATABASE_URL setting or default to local settings if unable to find
+    #
+    # Postgresql - use this if your local database is Postgresql
+    #SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "postgresql://postgres:postgres_pw@localhost/database_1"),
+    # Sqlite - use this if your local database is Sqlite
+    SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///" + os.path.join(basedir, "app.db")),
+    CSRF_ENABLED=True,
+    SECRET_KEY='your_secret_key',
+    DEBUG=True,
     )
 
 db = SQLAlchemy(app)
@@ -30,11 +31,9 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.login_message = "Please log in to access this page."
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
 login_manager.init_app(app)
 
 
@@ -94,7 +93,7 @@ def login():
         the_user = User.query.filter_by(email=form.email.data).first()
         if the_user:
             # Email found, next check the password
-            pw = check_password_hash(the_user.pw_hash, form.password.data)
+            pw = the_user.check_password(form.password.data)
             if pw:
                 # Password was correct, log the user in
                 login_user(the_user)

@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block title %} - Home{% endblock %}
 {% block content %}
+    <h1>Hello World!</h1>
+    <p>This is a Python Flask website running on Heroku and Postgresql.</p>
 {% if current_user.is_authenticated() %}
-    <p>You are logged in as <strong>{{ user.name }}</strong>.</p>
+    <p>You are currently logged in as <strong>{{ user.email }}</strong>.</p>
 {% else %}
-    <p>You are not logged in.</p>
+    <br><p>You are not logged in.</p>
 {% endif %}
 {% endblock %}

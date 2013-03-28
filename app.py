@@ -2,7 +2,8 @@ import os
 from flask import Flask, render_template, flash, redirect, session, url_for, request, g
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
-from flask.ext.wtf import Form, TextField, Required
+from forms import LoginForm, RegisterForm
+from werkzeug.security import check_password_hash, generate_password_hash
 
 #----------------------------------------
 # Initialization
@@ -14,9 +15,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config.update(
     DEBUG = True,
     # Heroku Database Setting
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
+    #SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
     # Local Development sqlite setting
-    #SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),
     CSRF_ENABLED = True,
     SECRET_KEY = 'my_secret_key',
     )
@@ -40,12 +41,18 @@ login_manager.init_app(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80))
     email = db.Column(db.String(255), unique=True)
+    pw_hash = db.Column(db.String(255))
 
-    def __init__(self, name, email):
-        self.name = name
+    def __init__(self, email, password):
         self.email = email
+        self.set_password(password)
+
+    def set_password(self, password):
+        self.pw_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.pw_hash, password)
 
     def is_authenticated(self):
         return True
@@ -63,15 +70,6 @@ class User(db.Model):
         return '<Name %r>' % self.name
 
 
-class LoginForm(Form):
-    name = TextField('name', validators=[Required()])
-    email = TextField('email', validators=[Required()])
-
-class RegisterForm(Form):
-    name = TextField('name', validators=[Required()])
-    email = TextField('email', validators=[Required()])
-
-
 #----------------------------------------
 # Controllers
 #----------------------------------------
@@ -87,14 +85,25 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
+    # Check if form field validation checks out
     if form.validate_on_submit():
         # Check username and password against database here
-        the_user = User.query.filter_by(name=form.name.data).first()
+        the_user = User.query.filter_by(email=form.email.data).first()
         if the_user:
-            login_user(the_user)
-            return redirect(url_for('index'))
+            # Email found, next check the password
+            pw = check_password_hash(the_user.pw_hash, form.password.data)
+            if pw:
+                # Password was correct, log the user in
+                login_user(the_user)
+                return redirect(url_for('index'))
+            else:
+                # Password was incorrect
+                flash("Incorrect password.")
+                return render_template('login.html', title='Sign In', form=form)
         # User failed to log in, show login page again
         else:
+            # Email was not found in database
+            flash("User not found.")
             return render_template('login.html', title='Sign In', form=form)
     return render_template('login.html', title='Sign In', form=form)
 
@@ -103,9 +112,10 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         # Save new user to database
-        new_user = User(name=form.name.data, email=form.email.data)
+        new_user = User(email=form.email.data, password=form.password.data)
         db.session.add(new_user)
         db.session.commit()
+        flash("Registration successful. Please log in.")
         return redirect(url_for('login'))
     return render_template('register.html', title='Register New User', form=form)
 
@@ -113,6 +123,7 @@ def register():
 @login_required
 def logout():
     logout_user()
+    flash("You have been successfully logged out.")
     return redirect(url_for('index'))
 
 

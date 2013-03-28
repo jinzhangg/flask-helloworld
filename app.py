@@ -5,6 +5,7 @@ from flask.ext.login import LoginManager, login_user, logout_user, current_user,
 from forms import LoginForm, RegisterForm
 from werkzeug.security import check_password_hash, generate_password_hash
 
+
 #----------------------------------------
 # Initialization
 #----------------------------------------
@@ -15,9 +16,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config.update(
     DEBUG = True,
     # Heroku Database Setting
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
+    #SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
     # Local Development sqlite setting
-    #SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db'),
     CSRF_ENABLED = True,
     SECRET_KEY = 'your_secret_key',
     )
@@ -110,13 +111,21 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
+    # Check if form field validation checks out
     if form.validate_on_submit():
-        # Save new user to database
-        new_user = User(email=form.email.data, password=form.password.data)
-        db.session.add(new_user)
-        db.session.commit()
-        flash("Registration successful. Please log in.")
-        return redirect(url_for('login'))
+        # Check if email already exist in database
+        the_user = User.query.filter_by(email=form.email.data).first()
+        if the_user:
+            # Email already exist, report error to user
+            flash("Account with " + form.email.data + " already exist!")
+            return redirect(url_for('register'))
+        else:
+            # Save new user to database
+            new_user = User(email=form.email.data, password=form.password.data)
+            db.session.add(new_user)
+            db.session.commit()
+            flash("Registration successful. Please log in.")
+            return redirect(url_for('login'))
     return render_template('register.html', title='Register New User', form=form)
 
 @app.route('/logout')
